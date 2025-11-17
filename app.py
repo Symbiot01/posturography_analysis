@@ -56,7 +56,8 @@ with st.sidebar:
 
     if uploaded_files:
         current_file_names = [f.name for f in uploaded_files]
-        if st.session_state.uploaded_file_names != current_file_names:
+        previous_file_names = st.session_state.get("uploaded_file_names", [])
+        if previous_file_names != current_file_names:
             reset_session()
             st.session_state.uploaded_file_names = current_file_names
 

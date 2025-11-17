@@ -1,0 +1,47 @@
+Test 1: Modified CTSIB (NSEO)
+* Test Date: 08/15/2024
+* Stability Score: 82.4
+* Sway Path Length: 0.42 m
+* Sway Velocity (Ave): 4.8 mm/s
+* Sway Velocity (Max & 95%): 11.2 mm/s & 7.6 mm/s
+* Area 95% Conf. Ellipse: 1.18 cm2
+* Sway Center: [0.010 m, -0.018 m]
+* Fatigue Ratio: 1.05
+* Adaptation Ratio: 0.92
+* Directionality: 14.2
+* Stability Class: Functional | Within Normal Limits
+
+Test 2: Modified CTSIB (NSEC)
+* Test Date: 08/15/2024
+* Stability Score: 75.9
+* Sway Path Length: 0.57 m
+* Sway Velocity (Ave): 6.1 mm/s
+* Sway Velocity (Max & Ave): 13.6 mm/s & 6.1 mm/s
+* Area 95% Conf. Ellipse: 1.62 cm2
+* Sway Center: [-0.006 m, 0.024 m]
+* Fatigue Ratio: 1.18
+* Adaptation Ratio: 0.81
+* Directionality: 21.7
+* Stability Class: Functional | Mild Instability
+
+Test 3: Foam Eyes Closed Left (PSEC)
+* Test Date: 08/15/2024
+* Stability Score: 68.3
+* Sway Path Length: 0.73 m
+* Sway Velocity (Ave): 7.4 mm/s
+* Area 95% Conf. Ellipse: 2.14 cm2
+* Sway Center: [-0.012 m, -0.031 m]
+* Fatigue Ratio: 1.25
+* Adaptation Ratio: 0.77
+* Directionality: 28.9
+
+Test 4: Foam Eyes Closed Right (PSEC)
+* Test Date: 08/15/2024
+* Stability Score: 70.2
+* Sway Path Length: 0.69 m
+* Sway Velocity (Ave): 7.1 mm/s
+* Area 95% Conf. Ellipse: 1.98 cm2
+* Sway Center: [0.015 m, -0.027 m]
+* Fatigue Ratio: 1.21
+* Adaptation Ratio: 0.80
+* Directionality: 25.4
