@@ -116,8 +116,8 @@ Here is a summary of posturography data for the metric "{metric}". Please provid
         "ai_user_query": user_query,
     }
 
-def analyze_radar_data(test, selected_radar_metrics, all_parsed_data):
-    """Build normalized radar view and supporting stats table."""
+def analyze_radar_data(test, selected_radar_metrics, all_parsed_data, normalize=True):
+    """Build radar view (normalized or raw) and supporting stats table."""
     if not selected_radar_metrics:
         return {
             "type": "radar",
@@ -130,21 +130,33 @@ def analyze_radar_data(test, selected_radar_metrics, all_parsed_data):
     file_names = [d["fileName"] for d in all_parsed_data]
     fig = go.Figure()
 
-    max_values = {}
-    for metric in selected_radar_metrics:
-        max_val = 0
-        for data in all_parsed_data:
-            val = (
-                data.get("tests", {})
-                .get(test, {})
-                .get("metrics", {})
-                .get(metric)
-            )
-            if val is not None and abs(val) > max_val:
-                max_val = abs(val)
-        max_values[metric] = max_val if max_val > 0 else 1
+    metric_ranges = {}
+    if normalize:
+        for metric in selected_radar_metrics:
+            values = []
+            for data in all_parsed_data:
+                val = (
+                    data.get("tests", {})
+                    .get(test, {})
+                    .get("metrics", {})
+                    .get(metric)
+                )
+                if val is not None:
+                    values.append(val)
+
+            if values:
+                min_val = min(values)
+                max_val = max(values)
+            else:
+                min_val = 0
+                max_val = 0
+
+            metric_ranges[metric] = (min_val, max_val)
 
     table_rows = []
+    global_min_val = float("inf")
+    global_max_val = float("-inf")
+
     for i, file_data in enumerate(all_parsed_data):
         normalized_data = []
         original_data = []
@@ -156,18 +168,37 @@ def analyze_radar_data(test, selected_radar_metrics, all_parsed_data):
                 .get("metrics", {})
                 .get(metric)
             )
-            original_data.append(val)
+            original_data.append(float(val) if val is not None else np.nan)
 
             if val is None:
                 normalized_data.append(np.nan)
                 continue
 
-            norm_val = val / max_values[metric]
+            if normalize:
+                min_val, max_val = metric_ranges[metric]
+                orientation = RADAR_KEY_METRICS_CONFIG.get(metric, "high")
 
-            if RADAR_KEY_METRICS_CONFIG.get(metric) == "low":
-                norm_val = 1 - abs(norm_val)
+                if max_val == min_val:
+                    norm_val = 1.0
+                else:
+                    norm_val = (val - min_val) / (max_val - min_val)
+                    if orientation == "low":
+                        norm_val = 1 - norm_val
 
-            normalized_data.append(max(0, norm_val) * 100)
+                norm_val = float(np.clip(norm_val, 0, 1))
+                normalized_data.append(norm_val * 100)
+            else:
+                normalized_data.append(val)
+                global_min_val = min(global_min_val, val)
+                global_max_val = max(global_max_val, val)
+
+        hovertemplate = "<b>%{theta}</b><br>"
+        if normalize:
+            hovertemplate += (
+                "Original: %{customdata:.3f}<br>Normalized: %{r:.1f}<extra></extra>"
+            )
+        else:
+            hovertemplate += "Value: %{r:.3f}<extra></extra>"
 
         fig.add_trace(
             go.Scatterpolar(
@@ -176,17 +207,33 @@ def analyze_radar_data(test, selected_radar_metrics, all_parsed_data):
                 fill="toself",
                 name=file_names[i],
                 customdata=original_data,
-                hovertemplate=(
-                    "<b>%{theta}</b><br>Original: %{customdata:.3f}<br>"
-                    "Normalized: %{r:.1f}<extra></extra>"
-                ),
+                hovertemplate=hovertemplate,
             )
         )
 
+    if normalize:
+        radialaxis = dict(visible=True, range=[0, 100], showticklabels=False)
+        title_suffix = "Normalized"
+    else:
+        if global_min_val == float("inf") or global_max_val == float("-inf"):
+            global_min_val, global_max_val = 0, 1
+        elif global_min_val == global_max_val:
+            global_max_val = global_min_val + 1
+        elif global_min_val > 0:
+            global_min_val = 0
+
+        radialaxis = dict(
+            visible=True,
+            range=[global_min_val, global_max_val],
+            showticklabels=True,
+            tickformat=".2f",
+        )
+        title_suffix = "Original Values"
+
     fig.update_layout(
-        title=f"Comprehensive Profile for {test} (Normalized)",
+        title=f"Comprehensive Profile for {test} ({title_suffix})",
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], showticklabels=False),
+            radialaxis=radialaxis,
             angularaxis=dict(tickfont=dict(size=10)),
         ),
         legend_title_text="Data File",
@@ -235,4 +282,6 @@ Here is a summary of key posturography metrics for the test condition "{test}". 
         "table_data": df_table,
         "ai_system_prompt": system_prompt,
         "ai_user_query": user_query,
+        "normalized": normalize,
     }
+
